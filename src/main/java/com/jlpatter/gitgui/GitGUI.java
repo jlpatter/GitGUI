@@ -1,7 +1,13 @@
 package com.jlpatter.gitgui;
 
+import javax.swing.*;
+
 public class GitGUI {
     public static void main(String[] args) {
-        new GitGUIForm().show();
+        JFrame frame = new JFrame();
+        frame.setContentPane(new JGitGUIForm().getPanel());
+        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        frame.pack();
+        frame.setVisible(true);
     }
 }

@@ -31,6 +31,11 @@
             <artifactId>org.eclipse.jgit</artifactId>
             <version>5.12.0.202106070339-r</version>
         </dependency>
+        <dependency>
+            <groupId>com.intellij</groupId>
+            <artifactId>forms_rt</artifactId>
+            <version>7.0.3</version>
+        </dependency>
     </dependencies>
 
 </project>
