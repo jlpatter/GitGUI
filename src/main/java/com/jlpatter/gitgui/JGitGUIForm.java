@@ -49,6 +49,7 @@ public class JGitGUIForm {
         });
 
         table1.setModel(model);
+        table1.addMouseListener(new RCMenu());
     }
 
     public JPanel getPanel() {
