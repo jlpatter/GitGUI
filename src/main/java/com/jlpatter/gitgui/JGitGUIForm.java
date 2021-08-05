@@ -4,22 +4,40 @@ import com.intellij.uiDesigner.core.GridConstraints;
 import com.intellij.uiDesigner.core.GridLayoutManager;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.errors.GitAPIException;
+import org.eclipse.jgit.lib.Ref;
 import org.eclipse.jgit.revwalk.RevCommit;
+import org.eclipse.jgit.transport.FetchResult;
 
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
-import java.awt.*;
+import java.awt.Insets;
 import java.io.IOException;
+import java.util.List;
 import java.util.Vector;
 
 public class JGitGUIForm {
+    private Git git;
+
     private JButton openBtn;
     private JButton exitBtn;
     private JTable table1;
     private JPanel panel;
+    private JButton fetchBtn;
+    private JButton pullBtn;
+    private JButton pushBtn;
 
     public JGitGUIForm() {
-        DefaultTableModel model = new DefaultTableModel(new Object[]{"Commits"}, 0);
+        git = null;
+
+        fetchBtn.addActionListener(e -> {
+            if (git != null) {
+                try {
+                    FetchResult fetchResult = git.fetch().call();
+                } catch (GitAPIException ex) {
+                    ex.printStackTrace();
+                }
+            }
+        });
 
         openBtn.addActionListener(e -> {
             try {
@@ -29,15 +47,28 @@ public class JGitGUIForm {
                 chooser.setAcceptAllFileFilterUsed(false);
 
                 if (chooser.showOpenDialog(null) == JFileChooser.APPROVE_OPTION) {
+                    DefaultTableModel model = new DefaultTableModel(new Object[]{"Commits"}, 0);
                     System.out.println("getSelectedFile(): " + chooser.getSelectedFile());
 
-                    Git git = Git.open(chooser.getSelectedFile());
+                    git = Git.open(chooser.getSelectedFile());
                     Iterable<RevCommit> commits = git.log().call();
+                    List<Ref> refs = git.branchList().call();
                     for (RevCommit commit : commits) {
                         Vector<String> stringVector = new Vector<>();
-                        stringVector.addElement(commit.getShortMessage());
+                        String strToAdd = "";
+
+                        for (Ref ref : refs) {
+                            if (ref.getObjectId().equals(commit.getId())) {
+                                strToAdd += "(" + ref.getName() + ") ";
+                                break;
+                            }
+                        }
+
+                        strToAdd += commit.getShortMessage();
+                        stringVector.addElement(strToAdd);
                         model.addRow(stringVector);
                     }
+                    table1.setModel(model);
                 }
             } catch (IOException | GitAPIException ex) {
                 ex.printStackTrace();
@@ -48,7 +79,6 @@ public class JGitGUIForm {
             System.exit(0);
         });
 
-        table1.setModel(model);
         table1.addMouseListener(new RCMenu());
     }
 
@@ -72,17 +102,26 @@ public class JGitGUIForm {
      */
     private void $$$setupUI$$$() {
         panel = new JPanel();
-        panel.setLayout(new GridLayoutManager(2, 2, new Insets(0, 0, 0, 0), -1, -1));
+        panel.setLayout(new GridLayoutManager(3, 3, new Insets(0, 0, 0, 0), -1, -1));
         openBtn = new JButton();
         openBtn.setText("Open");
-        panel.add(openBtn, new GridConstraints(1, 0, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_HORIZONTAL, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
+        panel.add(openBtn, new GridConstraints(2, 0, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_HORIZONTAL, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
         final JScrollPane scrollPane1 = new JScrollPane();
-        panel.add(scrollPane1, new GridConstraints(0, 0, 1, 2, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_BOTH, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_WANT_GROW, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_WANT_GROW, null, null, null, 0, false));
+        panel.add(scrollPane1, new GridConstraints(1, 0, 1, 3, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_BOTH, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_WANT_GROW, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_WANT_GROW, null, null, null, 0, false));
         table1 = new JTable();
         scrollPane1.setViewportView(table1);
+        fetchBtn = new JButton();
+        fetchBtn.setText("Fetch");
+        panel.add(fetchBtn, new GridConstraints(0, 0, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_HORIZONTAL, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
+        pullBtn = new JButton();
+        pullBtn.setText("Pull");
+        panel.add(pullBtn, new GridConstraints(0, 1, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_HORIZONTAL, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
+        pushBtn = new JButton();
+        pushBtn.setText("Push");
+        panel.add(pushBtn, new GridConstraints(0, 2, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_HORIZONTAL, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
         exitBtn = new JButton();
         exitBtn.setText("Exit");
-        panel.add(exitBtn, new GridConstraints(1, 1, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_HORIZONTAL, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
+        panel.add(exitBtn, new GridConstraints(2, 2, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_HORIZONTAL, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
     }
 
     /**
