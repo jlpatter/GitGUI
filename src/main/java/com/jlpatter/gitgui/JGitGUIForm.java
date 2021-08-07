@@ -3,6 +3,7 @@ package com.jlpatter.gitgui;
 import com.intellij.uiDesigner.core.GridConstraints;
 import com.intellij.uiDesigner.core.GridLayoutManager;
 import org.eclipse.jgit.api.Git;
+import org.eclipse.jgit.api.ListBranchCommand;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.lib.Ref;
 import org.eclipse.jgit.revwalk.RevCommit;
@@ -48,24 +49,22 @@ public class JGitGUIForm {
 
                 if (chooser.showOpenDialog(null) == JFileChooser.APPROVE_OPTION) {
                     DefaultTableModel model = new DefaultTableModel(new Object[]{"Commits"}, 0);
-                    System.out.println("getSelectedFile(): " + chooser.getSelectedFile());
 
                     git = Git.open(chooser.getSelectedFile());
                     Iterable<RevCommit> commits = git.log().call();
-                    List<Ref> refs = git.branchList().call();
+                    List<Ref> refs = git.branchList().setListMode(ListBranchCommand.ListMode.ALL).call();
                     for (RevCommit commit : commits) {
                         Vector<String> stringVector = new Vector<>();
-                        String strToAdd = "";
+                        StringBuilder strToAdd = new StringBuilder();
 
                         for (Ref ref : refs) {
                             if (ref.getObjectId().equals(commit.getId())) {
-                                strToAdd += "(" + ref.getName() + ") ";
-                                break;
+                                strToAdd.append("(").append(ref.getName()).append(") ");
                             }
                         }
 
-                        strToAdd += commit.getShortMessage();
-                        stringVector.addElement(strToAdd);
+                        strToAdd.append(commit.getShortMessage());
+                        stringVector.addElement(strToAdd.toString());
                         model.addRow(stringVector);
                     }
                     table1.setModel(model);
