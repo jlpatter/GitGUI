@@ -7,7 +7,8 @@ import org.eclipse.jgit.api.ListBranchCommand;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.lib.Ref;
 import org.eclipse.jgit.revwalk.RevCommit;
-import org.eclipse.jgit.transport.FetchResult;
+import org.eclipse.jgit.transport.CredentialsProvider;
+import org.eclipse.jgit.transport.UsernamePasswordCredentialsProvider;
 
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
@@ -27,14 +28,20 @@ public class JGitGUIForm {
     private JButton pullBtn;
     private JButton pushBtn;
 
+    private static final String USERNAME = "jlpatter";
+    private static final String PASSWORD = "";
+
     public JGitGUIForm() {
         git = null;
 
         fetchBtn.addActionListener(e -> {
             if (git != null) {
                 try {
-                    FetchResult fetchResult = git.fetch().call();
-                } catch (GitAPIException ex) {
+                    CredentialsProvider cp = new UsernamePasswordCredentialsProvider(USERNAME, PASSWORD);
+                    git.fetch().setCredentialsProvider(cp).call();
+
+                    UpdateTable();
+                } catch (GitAPIException | IOException ex) {
                     ex.printStackTrace();
                 }
             }
@@ -48,26 +55,8 @@ public class JGitGUIForm {
                 chooser.setAcceptAllFileFilterUsed(false);
 
                 if (chooser.showOpenDialog(null) == JFileChooser.APPROVE_OPTION) {
-                    DefaultTableModel model = new DefaultTableModel(new Object[]{"Commits"}, 0);
-
                     git = Git.open(chooser.getSelectedFile());
-                    Iterable<RevCommit> commits = git.log().call();
-                    List<Ref> refs = git.branchList().setListMode(ListBranchCommand.ListMode.ALL).call();
-                    for (RevCommit commit : commits) {
-                        Vector<String> stringVector = new Vector<>();
-                        StringBuilder strToAdd = new StringBuilder();
-
-                        for (Ref ref : refs) {
-                            if (ref.getObjectId().equals(commit.getId())) {
-                                strToAdd.append("(").append(ref.getName()).append(") ");
-                            }
-                        }
-
-                        strToAdd.append(commit.getShortMessage());
-                        stringVector.addElement(strToAdd.toString());
-                        model.addRow(stringVector);
-                    }
-                    table1.setModel(model);
+                    UpdateTable();
                 }
             } catch (IOException | GitAPIException ex) {
                 ex.printStackTrace();
@@ -79,6 +68,27 @@ public class JGitGUIForm {
         });
 
         table1.addMouseListener(new RCMenu());
+    }
+
+    private void UpdateTable() throws GitAPIException, IOException {
+        DefaultTableModel model = new DefaultTableModel(new Object[]{"Commits"}, 0);
+        Iterable<RevCommit> commits = git.log().all().call();
+        List<Ref> refs = git.branchList().setListMode(ListBranchCommand.ListMode.ALL).call();
+        for (RevCommit commit : commits) {
+            Vector<String> stringVector = new Vector<>();
+            StringBuilder strToAdd = new StringBuilder();
+
+            for (Ref ref : refs) {
+                if (ref.getObjectId().equals(commit.getId())) {
+                    strToAdd.append("(").append(ref.getName()).append(") ");
+                }
+            }
+
+            strToAdd.append(commit.getShortMessage());
+            stringVector.addElement(strToAdd.toString());
+            model.addRow(stringVector);
+        }
+        table1.setModel(model);
     }
 
     public JPanel getPanel() {
