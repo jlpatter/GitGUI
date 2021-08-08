@@ -68,6 +68,19 @@ public class JGitGUIForm {
             }
         });
 
+        pushBtn.addActionListener(e -> {
+            if (git != null) {
+                try {
+                    CredentialsProvider cp = new UsernamePasswordCredentialsProvider(username, password);
+                    git.push().setCredentialsProvider(cp).call();
+
+                    UpdateTable();
+                } catch (GitAPIException | IOException ex) {
+                    ex.printStackTrace();
+                }
+            }
+        });
+
         openBtn.addActionListener(e -> {
             try {
                 JFileChooser chooser = new JFileChooser();
