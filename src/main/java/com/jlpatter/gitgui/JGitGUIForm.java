@@ -37,6 +37,7 @@ public class JGitGUIForm {
         loginBtn.addActionListener(e -> {
             JFrame frame = new JFrame("Please Login");
             frame.setContentPane(new LoginForm(this, frame).getPanel());
+            frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
             frame.pack();
             frame.setVisible(true);
         });

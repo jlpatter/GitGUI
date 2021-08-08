@@ -20,11 +20,11 @@ public class LoginForm {
         loginBtn.addActionListener(e -> {
             gitForm.setUsername(usernameTxt.getText());
             gitForm.setPassword(new String(passwordTxt.getPassword()));
-            thisFrame.setVisible(false);
+            thisFrame.dispose();
         });
 
         cancelBtn.addActionListener(e -> {
-            thisFrame.setVisible(false);
+            thisFrame.dispose();
         });
     }
 
