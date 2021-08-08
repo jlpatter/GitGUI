@@ -15,7 +15,7 @@
         <properties/>
         <border type="none"/>
         <children>
-          <component id="e6d12" class="javax.swing.JTable" binding="table1" default-binding="true">
+          <component id="e6d12" class="javax.swing.JTable" binding="commitTable">
             <constraints/>
             <properties/>
           </component>
@@ -67,6 +67,14 @@
         </constraints>
         <properties>
           <text value="Open"/>
+        </properties>
+      </component>
+      <component id="355ed" class="javax.swing.JButton" binding="refreshBtn">
+        <constraints>
+          <grid row="2" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
+        </constraints>
+        <properties>
+          <text value="Refresh"/>
         </properties>
       </component>
     </children>

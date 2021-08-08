@@ -24,12 +24,13 @@ public class JGitGUIForm {
 
     private JButton openBtn;
     private JButton exitBtn;
-    private JTable table1;
+    private JTable commitTable;
     private JPanel panel;
     private JButton fetchBtn;
     private JButton pullBtn;
     private JButton pushBtn;
     private JButton loginBtn;
+    private JButton refreshBtn;
 
     public JGitGUIForm() {
         git = null;
@@ -97,11 +98,19 @@ public class JGitGUIForm {
             }
         });
 
+        refreshBtn.addActionListener(e -> {
+            try {
+                UpdateTable();
+            } catch (GitAPIException | IOException ex) {
+                ex.printStackTrace();
+            }
+        });
+
         exitBtn.addActionListener(e -> {
             System.exit(0);
         });
 
-        table1.addMouseListener(new RCMenu());
+        commitTable.addMouseListener(new RCMenu());
     }
 
     private void UpdateTable() throws GitAPIException, IOException {
@@ -122,7 +131,7 @@ public class JGitGUIForm {
             stringVector.addElement(strToAdd.toString());
             model.addRow(stringVector);
         }
-        table1.setModel(model);
+        commitTable.setModel(model);
     }
 
     public void setUsername(String u) {
@@ -156,8 +165,8 @@ public class JGitGUIForm {
         panel.setLayout(new GridLayoutManager(3, 4, new Insets(0, 0, 0, 0), -1, -1));
         final JScrollPane scrollPane1 = new JScrollPane();
         panel.add(scrollPane1, new GridConstraints(1, 0, 1, 4, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_BOTH, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_WANT_GROW, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_WANT_GROW, null, null, null, 0, false));
-        table1 = new JTable();
-        scrollPane1.setViewportView(table1);
+        commitTable = new JTable();
+        scrollPane1.setViewportView(commitTable);
         fetchBtn = new JButton();
         fetchBtn.setText("Fetch");
         panel.add(fetchBtn, new GridConstraints(0, 1, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_HORIZONTAL, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
@@ -176,6 +185,9 @@ public class JGitGUIForm {
         openBtn = new JButton();
         openBtn.setText("Open");
         panel.add(openBtn, new GridConstraints(2, 0, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_HORIZONTAL, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
+        refreshBtn = new JButton();
+        refreshBtn.setText("Refresh");
+        panel.add(refreshBtn, new GridConstraints(2, 1, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_HORIZONTAL, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
     }
 
     /**
