@@ -4,6 +4,7 @@ import com.intellij.uiDesigner.core.GridConstraints;
 import com.intellij.uiDesigner.core.GridLayoutManager;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.ListBranchCommand;
+import org.eclipse.jgit.api.Status;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.lib.Ref;
 import org.eclipse.jgit.revwalk.RevCommit;
@@ -15,7 +16,7 @@ import javax.swing.table.DefaultTableModel;
 import java.awt.Insets;
 import java.io.IOException;
 import java.util.List;
-import java.util.Vector;
+import java.util.Set;
 
 public class JGitGUIForm {
     private Git git;
@@ -31,6 +32,8 @@ public class JGitGUIForm {
     private JButton pushBtn;
     private JButton loginBtn;
     private JButton refreshBtn;
+    private JTable unstagedTable;
+    private JTable stagedTable;
 
     public JGitGUIForm() {
         git = null;
@@ -49,7 +52,7 @@ public class JGitGUIForm {
                     CredentialsProvider cp = new UsernamePasswordCredentialsProvider(username, password);
                     git.fetch().setCredentialsProvider(cp).call();
 
-                    UpdateTable();
+                    UpdateCommitTable();
                 } catch (GitAPIException | IOException ex) {
                     ex.printStackTrace();
                 }
@@ -62,7 +65,7 @@ public class JGitGUIForm {
                     CredentialsProvider cp = new UsernamePasswordCredentialsProvider(username, password);
                     git.pull().setCredentialsProvider(cp).call();
 
-                    UpdateTable();
+                    UpdateCommitTable();
                 } catch (GitAPIException | IOException ex) {
                     ex.printStackTrace();
                 }
@@ -75,7 +78,7 @@ public class JGitGUIForm {
                     CredentialsProvider cp = new UsernamePasswordCredentialsProvider(username, password);
                     git.push().setCredentialsProvider(cp).call();
 
-                    UpdateTable();
+                    UpdateCommitTable();
                 } catch (GitAPIException | IOException ex) {
                     ex.printStackTrace();
                 }
@@ -91,7 +94,8 @@ public class JGitGUIForm {
 
                 if (chooser.showOpenDialog(null) == JFileChooser.APPROVE_OPTION) {
                     git = Git.open(chooser.getSelectedFile());
-                    UpdateTable();
+                    UpdateCommitTable();
+                    UpdateStatusTables();
                 }
             } catch (IOException | GitAPIException ex) {
                 ex.printStackTrace();
@@ -100,7 +104,7 @@ public class JGitGUIForm {
 
         refreshBtn.addActionListener(e -> {
             try {
-                UpdateTable();
+                UpdateCommitTable();
             } catch (GitAPIException | IOException ex) {
                 ex.printStackTrace();
             }
@@ -113,25 +117,64 @@ public class JGitGUIForm {
         commitTable.addMouseListener(new RCMenu());
     }
 
-    private void UpdateTable() throws GitAPIException, IOException {
+    private void UpdateCommitTable() throws GitAPIException, IOException {
         DefaultTableModel model = new DefaultTableModel(new Object[]{"Commits"}, 0);
         Iterable<RevCommit> commits = git.log().all().call();
         List<Ref> refs = git.branchList().setListMode(ListBranchCommand.ListMode.ALL).call();
         for (RevCommit commit : commits) {
-            Vector<String> stringVector = new Vector<>();
-            StringBuilder strToAdd = new StringBuilder();
+            StringBuilder sb = new StringBuilder();
 
             for (Ref ref : refs) {
                 if (ref.getObjectId().equals(commit.getId())) {
-                    strToAdd.append("(").append(ref.getName()).append(") ");
+                    sb.append("(").append(ref.getName()).append(") ");
                 }
             }
 
-            strToAdd.append(commit.getShortMessage());
-            stringVector.addElement(strToAdd.toString());
-            model.addRow(stringVector);
+            sb.append(commit.getShortMessage());
+            model.addRow(new Object[]{sb.toString()});
         }
         commitTable.setModel(model);
+    }
+
+    private void UpdateStatusTables() throws GitAPIException {
+        DefaultTableModel model = new DefaultTableModel(new Object[]{"Unstaged Changes"}, 0);
+        Status status = git.status().call();
+
+        Set<String> missing = status.getMissing();
+        for (String m : missing) {
+            model.addRow(new Object[]{"(Missing) " + m});
+        }
+
+        Set<String> modified = status.getModified();
+        for (String m : modified) {
+            model.addRow(new Object[]{"(Modified) " + m});
+        }
+
+        Set<String> untracked = status.getUntracked();
+        for (String u : untracked) {
+            model.addRow(new Object[]{"(Untracked) " + u});
+        }
+
+        unstagedTable.setModel(model);
+
+        DefaultTableModel stagedModel = new DefaultTableModel(new Object[]{"Staged Changes"}, 0);
+
+        Set<String> added = status.getAdded();
+        for (String a : added) {
+            stagedModel.addRow(new Object[]{"(Added) " + a});
+        }
+
+        Set<String> changed = status.getChanged();
+        for (String c : changed) {
+            stagedModel.addRow(new Object[]{"(Changed) " + c});
+        }
+
+        Set<String> removed = status.getRemoved();
+        for (String r : removed) {
+            stagedModel.addRow(new Object[]{"(Removed) " + r});
+        }
+
+        stagedTable.setModel(stagedModel);
     }
 
     public void setUsername(String u) {
@@ -162,9 +205,9 @@ public class JGitGUIForm {
      */
     private void $$$setupUI$$$() {
         panel = new JPanel();
-        panel.setLayout(new GridLayoutManager(3, 4, new Insets(0, 0, 0, 0), -1, -1));
+        panel.setLayout(new GridLayoutManager(4, 5, new Insets(0, 0, 0, 0), -1, -1));
         final JScrollPane scrollPane1 = new JScrollPane();
-        panel.add(scrollPane1, new GridConstraints(1, 0, 1, 4, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_BOTH, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_WANT_GROW, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_WANT_GROW, null, null, null, 0, false));
+        panel.add(scrollPane1, new GridConstraints(1, 0, 2, 4, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_BOTH, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_WANT_GROW, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_WANT_GROW, null, null, null, 0, false));
         commitTable = new JTable();
         scrollPane1.setViewportView(commitTable);
         fetchBtn = new JButton();
@@ -178,16 +221,24 @@ public class JGitGUIForm {
         panel.add(pushBtn, new GridConstraints(0, 3, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_HORIZONTAL, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
         exitBtn = new JButton();
         exitBtn.setText("Exit");
-        panel.add(exitBtn, new GridConstraints(2, 3, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_HORIZONTAL, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
+        panel.add(exitBtn, new GridConstraints(3, 3, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_HORIZONTAL, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
         loginBtn = new JButton();
         loginBtn.setText("Login");
         panel.add(loginBtn, new GridConstraints(0, 0, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_HORIZONTAL, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
         openBtn = new JButton();
         openBtn.setText("Open");
-        panel.add(openBtn, new GridConstraints(2, 0, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_HORIZONTAL, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
+        panel.add(openBtn, new GridConstraints(3, 0, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_HORIZONTAL, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
         refreshBtn = new JButton();
         refreshBtn.setText("Refresh");
-        panel.add(refreshBtn, new GridConstraints(2, 1, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_HORIZONTAL, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
+        panel.add(refreshBtn, new GridConstraints(3, 1, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_HORIZONTAL, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
+        final JScrollPane scrollPane2 = new JScrollPane();
+        panel.add(scrollPane2, new GridConstraints(1, 4, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_BOTH, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_WANT_GROW, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_WANT_GROW, null, null, null, 0, false));
+        unstagedTable = new JTable();
+        scrollPane2.setViewportView(unstagedTable);
+        final JScrollPane scrollPane3 = new JScrollPane();
+        panel.add(scrollPane3, new GridConstraints(2, 4, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_BOTH, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_WANT_GROW, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_WANT_GROW, null, null, null, 0, false));
+        stagedTable = new JTable();
+        scrollPane3.setViewportView(stagedTable);
     }
 
     /**
