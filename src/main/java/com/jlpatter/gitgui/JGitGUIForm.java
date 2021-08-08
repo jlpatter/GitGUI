@@ -19,6 +19,8 @@ import java.util.Vector;
 
 public class JGitGUIForm {
     private Git git;
+    private String username;
+    private String password;
 
     private JButton openBtn;
     private JButton exitBtn;
@@ -27,17 +29,22 @@ public class JGitGUIForm {
     private JButton fetchBtn;
     private JButton pullBtn;
     private JButton pushBtn;
-
-    private static final String USERNAME = "jlpatter";
-    private static final String PASSWORD = "";
+    private JButton loginBtn;
 
     public JGitGUIForm() {
         git = null;
 
+        loginBtn.addActionListener(e -> {
+            JFrame frame = new JFrame("Please Login");
+            frame.setContentPane(new LoginForm(this, frame).getPanel());
+            frame.pack();
+            frame.setVisible(true);
+        });
+
         fetchBtn.addActionListener(e -> {
             if (git != null) {
                 try {
-                    CredentialsProvider cp = new UsernamePasswordCredentialsProvider(USERNAME, PASSWORD);
+                    CredentialsProvider cp = new UsernamePasswordCredentialsProvider(username, password);
                     git.fetch().setCredentialsProvider(cp).call();
 
                     UpdateTable();
@@ -50,7 +57,7 @@ public class JGitGUIForm {
         pullBtn.addActionListener(e -> {
             if (git != null) {
                 try {
-                    CredentialsProvider cp = new UsernamePasswordCredentialsProvider(USERNAME, PASSWORD);
+                    CredentialsProvider cp = new UsernamePasswordCredentialsProvider(username, password);
                     git.pull().setCredentialsProvider(cp).call();
 
                     UpdateTable();
@@ -104,6 +111,14 @@ public class JGitGUIForm {
         table1.setModel(model);
     }
 
+    public void setUsername(String u) {
+        username = u;
+    }
+
+    public void setPassword(String p) {
+        password = p;
+    }
+
     public JPanel getPanel() {
         return panel;
     }
@@ -124,26 +139,29 @@ public class JGitGUIForm {
      */
     private void $$$setupUI$$$() {
         panel = new JPanel();
-        panel.setLayout(new GridLayoutManager(3, 3, new Insets(0, 0, 0, 0), -1, -1));
-        openBtn = new JButton();
-        openBtn.setText("Open");
-        panel.add(openBtn, new GridConstraints(2, 0, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_HORIZONTAL, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
+        panel.setLayout(new GridLayoutManager(3, 4, new Insets(0, 0, 0, 0), -1, -1));
         final JScrollPane scrollPane1 = new JScrollPane();
-        panel.add(scrollPane1, new GridConstraints(1, 0, 1, 3, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_BOTH, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_WANT_GROW, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_WANT_GROW, null, null, null, 0, false));
+        panel.add(scrollPane1, new GridConstraints(1, 0, 1, 4, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_BOTH, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_WANT_GROW, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_WANT_GROW, null, null, null, 0, false));
         table1 = new JTable();
         scrollPane1.setViewportView(table1);
         fetchBtn = new JButton();
         fetchBtn.setText("Fetch");
-        panel.add(fetchBtn, new GridConstraints(0, 0, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_HORIZONTAL, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
+        panel.add(fetchBtn, new GridConstraints(0, 1, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_HORIZONTAL, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
         pullBtn = new JButton();
         pullBtn.setText("Pull");
-        panel.add(pullBtn, new GridConstraints(0, 1, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_HORIZONTAL, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
+        panel.add(pullBtn, new GridConstraints(0, 2, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_HORIZONTAL, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
         pushBtn = new JButton();
         pushBtn.setText("Push");
-        panel.add(pushBtn, new GridConstraints(0, 2, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_HORIZONTAL, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
+        panel.add(pushBtn, new GridConstraints(0, 3, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_HORIZONTAL, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
         exitBtn = new JButton();
         exitBtn.setText("Exit");
-        panel.add(exitBtn, new GridConstraints(2, 2, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_HORIZONTAL, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
+        panel.add(exitBtn, new GridConstraints(2, 3, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_HORIZONTAL, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
+        loginBtn = new JButton();
+        loginBtn.setText("Login");
+        panel.add(loginBtn, new GridConstraints(0, 0, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_HORIZONTAL, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
+        openBtn = new JButton();
+        openBtn.setText("Open");
+        panel.add(openBtn, new GridConstraints(2, 0, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_HORIZONTAL, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
     }
 
     /**
