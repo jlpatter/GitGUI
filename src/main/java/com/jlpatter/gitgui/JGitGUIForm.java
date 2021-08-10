@@ -6,6 +6,7 @@ import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.ListBranchCommand;
 import org.eclipse.jgit.api.Status;
 import org.eclipse.jgit.api.errors.GitAPIException;
+import org.eclipse.jgit.lib.ObjectId;
 import org.eclipse.jgit.lib.Ref;
 import org.eclipse.jgit.revwalk.RevCommit;
 import org.eclipse.jgit.transport.CredentialsProvider;
@@ -15,8 +16,8 @@ import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
 import java.io.IOException;
+import java.util.*;
 import java.util.List;
-import java.util.Set;
 
 public class JGitGUIForm {
     private Git git;
@@ -151,18 +152,48 @@ public class JGitGUIForm {
         DefaultTableModel model = new DefaultTableModel(new Object[]{"Commits"}, 0);
         Iterable<RevCommit> commits = git.log().all().call();
         List<Ref> refs = git.branchList().setListMode(ListBranchCommand.ListMode.ALL).call();
-        for (RevCommit commit : commits) {
-            StringBuilder sb = new StringBuilder();
 
-            for (Ref ref : refs) {
-                if (ref.getObjectId().equals(commit.getId())) {
-                    sb.append("(").append(ref.getName()).append(") ");
+        Map<ObjectId, RevCommit> commitMap = new HashMap<>();
+        RevCommit highestCommit = commits.iterator().next();
+        List<RevCommit> masterCommitList = new ArrayList<>();
+        Map<ObjectId, String> commitStringMap = new HashMap<>();
+
+        commitMap.put(highestCommit.getId(), highestCommit);
+        for (RevCommit commit : commits) {
+            commitMap.put(commit.getId(), commit);
+        }
+
+        while (highestCommit.getParentCount() > 0) {
+            masterCommitList.add(highestCommit);
+            commitStringMap.put(highestCommit.getId(), highestCommit.getShortMessage());
+            highestCommit = highestCommit.getParent(0);
+        }
+
+        for (Ref ref : refs) {
+            RevCommit currentBranchCommit = commitMap.get(ref.getObjectId());
+            if (masterCommitList.contains(currentBranchCommit)) {
+                commitStringMap.replace(currentBranchCommit.getId(), "(" + ref.getName() + ") " + commitStringMap.get(currentBranchCommit.getId()));
+            }
+            else {
+                while (!masterCommitList.contains(currentBranchCommit)) {
+                    if (ref.getObjectId().equals(currentBranchCommit.getId())) {
+                        commitStringMap.put(currentBranchCommit.getId(), "    (" + ref.getName() + ") " + currentBranchCommit.getShortMessage());
+                    }
+                    else {
+                        commitStringMap.put(currentBranchCommit.getId(), "    " + currentBranchCommit.getShortMessage());
+                    }
+                    masterCommitList.add(currentBranchCommit);
+                    currentBranchCommit = currentBranchCommit.getParent(0);
                 }
             }
-
-            sb.append(commit.getShortMessage());
-            model.addRow(new Object[]{sb.toString()});
         }
+
+        commits = git.log().all().call();
+
+        for (RevCommit commit : commits) {
+            model.addRow(new Object[]{commitStringMap.get(commit.getId())});
+        }
+
         commitTable.setModel(model);
     }
 
