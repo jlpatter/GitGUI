@@ -175,7 +175,7 @@ public class JGitGUIForm {
                 commitStringMap.replace(currentBranchCommit.getId(), "(" + ref.getName() + ") " + commitStringMap.get(currentBranchCommit.getId()));
             }
             else {
-                while (!masterCommitList.contains(currentBranchCommit)) {
+                while (!masterCommitList.contains(currentBranchCommit) && currentBranchCommit != null) {
                     if (ref.getObjectId().equals(currentBranchCommit.getId())) {
                         commitStringMap.put(currentBranchCommit.getId(), "    (" + ref.getName() + ") " + currentBranchCommit.getShortMessage());
                     }

@@ -17,7 +17,10 @@
         <children>
           <component id="e6d12" class="javax.swing.JTable" binding="commitTable">
             <constraints/>
-            <properties/>
+            <properties>
+              <preferredScrollableViewportSize width="900" height="400"/>
+              <selectionBackground color="-13670966"/>
+            </properties>
           </component>
         </children>
       </scrollpane>
