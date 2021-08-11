@@ -9,7 +9,7 @@ import java.util.List;
 public class GraphMessage {
     private final RevCommit commit;
     private final List<Ref> branches;
-    private final int indent;
+    private int indent;
 
     public GraphMessage(RevCommit commit, int indent) {
         this.commit = commit;
@@ -17,8 +17,16 @@ public class GraphMessage {
         this.indent = indent;
     }
 
-    public void AddBranch(Ref branch) {
+    public void addBranch(Ref branch) {
         branches.add(branch);
+    }
+
+    public void setIndent(int indent) {
+        this.indent = indent;
+    }
+
+    public boolean isFirstBranch() {
+        return branches.size() == 0;
     }
 
     @Override

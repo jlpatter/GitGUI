@@ -153,16 +153,44 @@ public class JGitGUIForm {
         Iterable<RevCommit> commits = git.log().all().call();
         List<Ref> refs = git.branchList().setListMode(ListBranchCommand.ListMode.ALL).call();
 
-        int currentIndent = 0;
+        Map<ObjectId, RevCommit> commitMap = new HashMap<>();
+        int currentIndent = -1;
         List<GraphMessage> graphMessages = new ArrayList<>();
 
+        for (RevCommit commit : commits) {
+            commitMap.put(commit.getId(), commit);
+        }
+
+        commits = git.log().all().call();
         for (RevCommit commit : commits) {
             GraphMessage gm = new GraphMessage(commit, currentIndent);
             for (Ref ref : refs) {
                 if (ref.getObjectId().equals(commit.getId())) {
-                    gm.AddBranch(ref);
+                    if (gm.isFirstBranch()) {
+                        currentIndent++;
+                        gm.setIndent(currentIndent);
+                    }
+                    gm.addBranch(ref);
                 }
             }
+
+            int counter = 0;
+            for (Ref ref : refs) {
+                RevCommit initialCommit = commitMap.get(ref.getObjectId());
+                RevCommit[] parentCommits = initialCommit.getParents();
+                for (RevCommit branchCommit : parentCommits) {
+                    if (branchCommit.equals(commit)) {
+                        counter++;
+                        break;
+                    }
+                }
+            }
+
+            if (counter > 1) {
+                currentIndent--;
+                gm.setIndent(currentIndent);
+            }
+
             graphMessages.add(gm);
         }
 
