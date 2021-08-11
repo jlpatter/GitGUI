@@ -153,47 +153,22 @@ public class JGitGUIForm {
         Iterable<RevCommit> commits = git.log().all().call();
         List<Ref> refs = git.branchList().setListMode(ListBranchCommand.ListMode.ALL).call();
 
-        Map<ObjectId, RevCommit> commitMap = new HashMap<>();
-        RevCommit highestCommit = commits.iterator().next();
-        List<RevCommit> masterCommitList = new ArrayList<>();
-        Map<ObjectId, String> commitStringMap = new HashMap<>();
+        int currentIndent = 0;
+        List<GraphMessage> graphMessages = new ArrayList<>();
 
-        commitMap.put(highestCommit.getId(), highestCommit);
         for (RevCommit commit : commits) {
-            commitMap.put(commit.getId(), commit);
-        }
-
-        while (highestCommit.getParentCount() > 0) {
-            masterCommitList.add(highestCommit);
-            commitStringMap.put(highestCommit.getId(), highestCommit.getShortMessage());
-            highestCommit = highestCommit.getParent(0);
-        }
-
-        for (Ref ref : refs) {
-            RevCommit currentBranchCommit = commitMap.get(ref.getObjectId());
-            if (masterCommitList.contains(currentBranchCommit)) {
-                commitStringMap.replace(currentBranchCommit.getId(), "(" + ref.getName() + ") " + commitStringMap.get(currentBranchCommit.getId()));
-            }
-            else {
-                while (!masterCommitList.contains(currentBranchCommit) && currentBranchCommit != null) {
-                    if (ref.getObjectId().equals(currentBranchCommit.getId())) {
-                        commitStringMap.put(currentBranchCommit.getId(), "    (" + ref.getName() + ") " + currentBranchCommit.getShortMessage());
-                    }
-                    else {
-                        commitStringMap.put(currentBranchCommit.getId(), "    " + currentBranchCommit.getShortMessage());
-                    }
-                    masterCommitList.add(currentBranchCommit);
-                    currentBranchCommit = currentBranchCommit.getParent(0);
+            GraphMessage gm = new GraphMessage(commit, currentIndent);
+            for (Ref ref : refs) {
+                if (ref.getObjectId().equals(commit.getId())) {
+                    gm.AddBranch(ref);
                 }
             }
+            graphMessages.add(gm);
         }
 
-        commits = git.log().all().call();
-
-        for (RevCommit commit : commits) {
-            model.addRow(new Object[]{commitStringMap.get(commit.getId())});
+        for (GraphMessage gm : graphMessages) {
+            model.addRow(new Object[]{gm.toString()});
         }
-
         commitTable.setModel(model);
     }
 
