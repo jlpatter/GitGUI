@@ -36,6 +36,8 @@ public class GraphMessage {
             sb.append("    ");
         }
 
+        sb.append("* ");
+
         for (Ref branch : branches) {
             sb.append("(").append(branch.getName()).append(") ");
         }

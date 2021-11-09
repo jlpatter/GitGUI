@@ -273,6 +273,8 @@ public class JGitGUIForm {
         final JScrollPane scrollPane1 = new JScrollPane();
         panel.add(scrollPane1, new GridConstraints(1, 0, 3, 4, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_BOTH, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_WANT_GROW, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_WANT_GROW, null, null, null, 0, false));
         commitTable = new JTable();
+        commitTable.setPreferredScrollableViewportSize(new Dimension(900, 400));
+        commitTable.setSelectionBackground(new Color(-13670966));
         scrollPane1.setViewportView(commitTable);
         fetchBtn = new JButton();
         fetchBtn.setText("Fetch");
