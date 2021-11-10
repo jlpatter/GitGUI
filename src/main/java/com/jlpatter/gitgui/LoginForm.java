@@ -15,11 +15,11 @@ public class LoginForm {
     private JButton loginBtn;
     private JButton cancelBtn;
 
-    public LoginForm(JGitGUIForm gitForm, JFrame thisFrame) {
+    public LoginForm(GitTools gitTools, JFrame thisFrame) {
 
         loginBtn.addActionListener(e -> {
-            gitForm.setUsername(usernameTxt.getText());
-            gitForm.setPassword(new String(passwordTxt.getPassword()));
+            gitTools.setUsername(usernameTxt.getText());
+            gitTools.setPassword(new String(passwordTxt.getPassword()));
             thisFrame.dispose();
         });
 

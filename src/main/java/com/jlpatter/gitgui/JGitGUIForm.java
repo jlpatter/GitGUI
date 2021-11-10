@@ -2,15 +2,11 @@ package com.jlpatter.gitgui;
 
 import com.intellij.uiDesigner.core.GridConstraints;
 import com.intellij.uiDesigner.core.GridLayoutManager;
-import org.eclipse.jgit.api.Git;
-import org.eclipse.jgit.api.ListBranchCommand;
 import org.eclipse.jgit.api.Status;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.lib.ObjectId;
 import org.eclipse.jgit.lib.Ref;
 import org.eclipse.jgit.revwalk.RevCommit;
-import org.eclipse.jgit.transport.CredentialsProvider;
-import org.eclipse.jgit.transport.UsernamePasswordCredentialsProvider;
 
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
@@ -20,12 +16,7 @@ import java.util.*;
 import java.util.List;
 
 public class JGitGUIForm {
-    private Git git;
-    private String username;
-    private String password;
-
-    private static final String NAME = "";
-    private static final String EMAIL = "";
+    private final GitTools gitTools;
 
     private JButton openBtn;
     private JButton exitBtn;
@@ -44,67 +35,55 @@ public class JGitGUIForm {
     private JLabel cMessageLbl;
 
     public JGitGUIForm() {
-        git = null;
+        gitTools = new GitTools();
 
         loginBtn.addActionListener(e -> {
             JFrame frame = new JFrame("Please Login");
-            frame.setContentPane(new LoginForm(this, frame).getPanel());
+            frame.setContentPane(new LoginForm(gitTools, frame).getPanel());
             frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
             frame.pack();
             frame.setVisible(true);
         });
 
         fetchBtn.addActionListener(e -> {
-            if (git != null) {
-                try {
-                    CredentialsProvider cp = new UsernamePasswordCredentialsProvider(username, password);
-                    git.fetch().setCredentialsProvider(cp).call();
-
-                    UpdateAll();
-                } catch (GitAPIException | IOException ex) {
-                    ex.printStackTrace();
-                }
+            gitTools.fetch();
+            try {
+                UpdateAll();
+            } catch (GitAPIException | IOException ex) {
+                ex.printStackTrace();
             }
         });
 
         pullBtn.addActionListener(e -> {
-            if (git != null) {
-                try {
-                    CredentialsProvider cp = new UsernamePasswordCredentialsProvider(username, password);
-                    git.pull().setCredentialsProvider(cp).call();
-
-                    UpdateAll();
-                } catch (GitAPIException | IOException ex) {
-                    ex.printStackTrace();
-                }
+            gitTools.pull();
+            try {
+                UpdateAll();
+            } catch (GitAPIException | IOException ex) {
+                ex.printStackTrace();
             }
         });
 
         pushBtn.addActionListener(e -> {
-            if (git != null) {
-                try {
-                    CredentialsProvider cp = new UsernamePasswordCredentialsProvider(username, password);
-                    git.push().setCredentialsProvider(cp).call();
-
-                    UpdateAll();
-                } catch (GitAPIException | IOException ex) {
-                    ex.printStackTrace();
-                }
+            gitTools.push();
+            try {
+                UpdateAll();
+            } catch (GitAPIException | IOException ex) {
+                ex.printStackTrace();
             }
         });
 
         openBtn.addActionListener(e -> {
-            try {
-                JFileChooser chooser = new JFileChooser();
-                chooser.setDialogTitle("Choose Git Repo");
-                chooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
-                chooser.setAcceptAllFileFilterUsed(false);
+            JFileChooser chooser = new JFileChooser();
+            chooser.setDialogTitle("Choose Git Repo");
+            chooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
+            chooser.setAcceptAllFileFilterUsed(false);
 
-                if (chooser.showOpenDialog(null) == JFileChooser.APPROVE_OPTION) {
-                    git = Git.open(chooser.getSelectedFile());
-                    UpdateAll();
-                }
-            } catch (IOException | GitAPIException ex) {
+            if (chooser.showOpenDialog(null) == JFileChooser.APPROVE_OPTION) {
+                gitTools.openRepo(chooser.getSelectedFile());
+            }
+            try {
+                UpdateAll();
+            } catch (GitAPIException | IOException ex) {
                 ex.printStackTrace();
             }
         });
@@ -123,7 +102,7 @@ public class JGitGUIForm {
 
         stageAllBtn.addActionListener(e -> {
             try {
-                git.add().addFilepattern(".").call();
+                gitTools.stageAll();
                 UpdateAll();
             } catch (GitAPIException | IOException ex) {
                 ex.printStackTrace();
@@ -132,7 +111,7 @@ public class JGitGUIForm {
 
         commitBtn.addActionListener(e -> {
             try {
-                git.commit().setAuthor(NAME, EMAIL).setCommitter(NAME, EMAIL).setMessage(cMessageTxt.getText()).call();
+                gitTools.commit(cMessageTxt.getText());
                 cMessageTxt.setText("");
                 UpdateAll();
             } catch (GitAPIException | IOException ex) {
@@ -150,8 +129,8 @@ public class JGitGUIForm {
 
     private void UpdateCommitTable() throws GitAPIException, IOException {
         DefaultTableModel model = new DefaultTableModel(new Object[]{"Commits"}, 0);
-        Iterable<RevCommit> commits = git.log().all().call();
-        List<Ref> refs = git.branchList().setListMode(ListBranchCommand.ListMode.ALL).call();
+        Iterable<RevCommit> commits = gitTools.getLog();
+        List<Ref> refs = gitTools.getAllBranches();
 
         Map<ObjectId, RevCommit> commitMap = new HashMap<>();
         int currentIndent = -1;
@@ -161,7 +140,7 @@ public class JGitGUIForm {
             commitMap.put(commit.getId(), commit);
         }
 
-        commits = git.log().all().call();
+        commits = gitTools.getLog();
         for (RevCommit commit : commits) {
             GraphMessage gm = new GraphMessage(commit, currentIndent);
             for (Ref ref : refs) {
@@ -202,7 +181,7 @@ public class JGitGUIForm {
 
     private void UpdateStatusTables() throws GitAPIException {
         DefaultTableModel model = new DefaultTableModel(new Object[]{"Unstaged Changes"}, 0);
-        Status status = git.status().call();
+        Status status = gitTools.getStatus();
 
         Set<String> missing = status.getMissing();
         for (String m : missing) {
@@ -239,14 +218,6 @@ public class JGitGUIForm {
         }
 
         stagedTable.setModel(stagedModel);
-    }
-
-    public void setUsername(String u) {
-        username = u;
-    }
-
-    public void setPassword(String p) {
-        password = p;
     }
 
     public JPanel getPanel() {
