@@ -134,7 +134,6 @@ public class JGitGUIForm {
         List<Ref> refs = gitTools.getAllBranches();
 
         Map<ObjectId, RevCommit> commitMap = new HashMap<>();
-        List<GraphMessage> graphMessages = new ArrayList<>();
 
         boolean first = true;
         RevCommit firstCommit = null;
@@ -164,11 +163,7 @@ public class JGitGUIForm {
         }
 
         for (JCommit commit : mainLine) {
-            graphMessages.add(new GraphMessage(commit));
-        }
-
-        for (GraphMessage gm : graphMessages) {
-            model.addRow(new Object[]{gm});
+            model.addRow(new Object[]{commit});
         }
         commitTable.setModel(model);
     }
