@@ -133,50 +133,40 @@ public class JGitGUIForm {
         List<Ref> refs = gitTools.getAllBranches();
 
         Map<ObjectId, RevCommit> commitMap = new HashMap<>();
-        int currentIndent = -1;
         List<GraphMessage> graphMessages = new ArrayList<>();
 
+        boolean first = true;
+        RevCommit firstCommit = null;
         for (RevCommit commit : commits) {
+            if (first) {
+                firstCommit = commit;
+                first = false;
+            }
             commitMap.put(commit.getId(), commit);
         }
 
-        commits = gitTools.getLog();
-        for (RevCommit commit : commits) {
-            GraphMessage gm = new GraphMessage(commit, currentIndent);
-            for (Ref ref : refs) {
-                if (ref.getObjectId().equals(commit.getId())) {
-                    if (gm.isFirstBranch()) {
-                        currentIndent++;
-                        gm.setIndent(currentIndent);
-                    }
-                    gm.addBranch(ref);
-                }
-            }
-
-            int counter = 0;
-            for (Ref ref : refs) {
-                RevCommit initialCommit = commitMap.get(ref.getObjectId());
-                RevCommit[] parentCommits = initialCommit.getParents();
-                for (RevCommit branchCommit : parentCommits) {
-                    if (branchCommit.equals(commit)) {
-                        counter++;
-                        break;
-                    }
-                }
-            }
-
-            if (counter > 1) {
-                currentIndent--;
-                gm.setIndent(currentIndent);
-            }
-
-            graphMessages.add(gm);
+        Set<RevCommit> startingCommits = new HashSet<>();
+        for (Ref ref : refs) {
+            startingCommits.add(commitMap.get(ref.getObjectId()));
         }
+
+        assert firstCommit != null;
+        walkGraphCommits(firstCommit, graphMessages, 0, 0);
 
         for (GraphMessage gm : graphMessages) {
             model.addRow(new Object[]{gm.toString()});
         }
         commitTable.setModel(model);
+    }
+
+    private void walkGraphCommits(RevCommit childCommit, List<GraphMessage> graphMessages, int depth, int indent) {
+        RevCommit[] parents = childCommit.getParents();
+        for (int i = parents.length - 1; i >= 0; i--) {
+            graphMessages.add(new GraphMessage(parents[i], i + indent));
+            if (depth < 10) {
+                walkGraphCommits(parents[i], graphMessages, depth + 1, i + indent);
+            }
+        }
     }
 
     private void UpdateStatusTables() throws GitAPIException {
