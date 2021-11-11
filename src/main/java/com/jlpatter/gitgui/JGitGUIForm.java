@@ -151,6 +151,7 @@ public class JGitGUIForm {
         }
 
         assert firstCommit != null;
+        graphMessages.add(new GraphMessage(firstCommit, 0));
         walkGraphCommits(firstCommit, graphMessages, 0, 0);
 
         for (GraphMessage gm : graphMessages) {
