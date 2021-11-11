@@ -5,6 +5,12 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 
 public class RCMenu extends MouseAdapter {
+    private final JTable commitTable;
+
+    public RCMenu(JTable commitTable) {
+        this.commitTable = commitTable;
+    }
+
     @Override
     public void mousePressed(MouseEvent e) {
         if (e.isPopupTrigger()) {
@@ -14,10 +20,11 @@ public class RCMenu extends MouseAdapter {
 
     private void doMenu(MouseEvent e) {
         JPopupMenu menu = new JPopupMenu();
-        JMenuItem testItem = new JMenuItem("Click Me!");
 
+        JMenuItem testItem = new JMenuItem("Click Me!");
         testItem.addActionListener(e1 -> {
-            System.out.println("BLURG");
+            JCommit test = (JCommit) commitTable.getModel().getValueAt(commitTable.getSelectedRow(), 0);
+            System.out.println(test.getCommit().getId());
         });
 
         menu.add(testItem);

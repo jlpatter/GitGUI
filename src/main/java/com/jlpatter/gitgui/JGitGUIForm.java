@@ -120,7 +120,7 @@ public class JGitGUIForm {
             }
         });
 
-        commitTable.addMouseListener(new RCMenu());
+        commitTable.addMouseListener(new RCMenu(commitTable));
     }
 
     private void UpdateAll() throws GitAPIException, IOException {
