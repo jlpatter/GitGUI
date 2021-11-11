@@ -146,15 +146,18 @@ public class JGitGUIForm {
             commitMap.put(commit.getId(), commit);
         }
 
-        List<JCommit> mainLine = getMainLine(firstCommit);
+        Pair<List<JCommit>, List<JCommit>> mainLinePair = getMainLine(firstCommit);
+        List<JCommit> mainLine = mainLinePair.getKey();
+        List<JCommit> mainLineMergeCommits = mainLinePair.getValue();
 
-        Set<RevCommit> startingCommits = new HashSet<>();
+        Set<JCommit> startingCommits = new HashSet<>();
         for (Ref ref : refs) {
-            startingCommits.add(commitMap.get(ref.getObjectId()));
+            startingCommits.add(new JCommit(commitMap.get(ref.getObjectId()), null, -1));
         }
+        startingCommits.addAll(mainLineMergeCommits);
 
-        for (RevCommit commit : startingCommits) {
-            Pair<List<JCommit>, Integer> sideLine = getSideLine(new JCommit(commit, -1), mainLine);
+        for (JCommit commit : startingCommits) {
+            Pair<List<JCommit>, Integer> sideLine = getSideLine(commit, mainLine);
             if (sideLine.getValue() > -1) {
                 mainLine.addAll(sideLine.getValue(), sideLine.getKey());
             }
@@ -165,21 +168,25 @@ public class JGitGUIForm {
         }
 
         for (GraphMessage gm : graphMessages) {
-            model.addRow(new Object[]{gm.toString()});
+            model.addRow(new Object[]{gm});
         }
         commitTable.setModel(model);
     }
 
-    private List<JCommit> getMainLine(RevCommit firstCommit) {
+    private Pair<List<JCommit>, List<JCommit>> getMainLine(RevCommit firstCommit) {
         List<JCommit> resultList = new ArrayList<>();
-        RevCommit currentCommit = firstCommit;
-        resultList.add(new JCommit(currentCommit, 0));
-        while (currentCommit.getParentCount() > 0) {
-            RevCommit[] parents = currentCommit.getParents();
-            currentCommit = parents[0];
-            resultList.add(new JCommit(currentCommit, 0));
+        List<JCommit> mergeCommits = new ArrayList<>();
+        JCommit currentJCommit = new JCommit(firstCommit, null, 0);
+        resultList.add(currentJCommit);
+        while (currentJCommit.getCommit().getParentCount() > 0) {
+            RevCommit[] parents = currentJCommit.getCommit().getParents();
+            if (parents.length > 1) {
+                mergeCommits.add(new JCommit(parents[1], currentJCommit, 1));
+            }
+            currentJCommit = new JCommit(parents[0], null, 0);
+            resultList.add(currentJCommit);
         }
-        return resultList;
+        return new Pair<>(resultList, mergeCommits);
     }
 
     private Pair<List<JCommit>, Integer> getSideLine(JCommit firstCommit, List<JCommit> mainLine) {
@@ -192,16 +199,25 @@ public class JGitGUIForm {
         resultList.add(currentCommit);
         while (!mainLine.contains(currentCommit)) {
             RevCommit[] parents = currentCommit.getCommit().getParents();
-            currentCommit = new JCommit(parents[0], -1);
+            currentCommit = new JCommit(parents[0], null, -1);
             if (!mainLine.contains(currentCommit)) {
                 resultList.add(currentCommit);
             }
             else {
-                indent = mainLine.get(mainLine.indexOf(currentCommit)).getIndent() + 1;
+                if (firstCommit.getMergeChildCommit() != null) {
+                    indent = firstCommit.getMergeChildCommit().getIndent() + 1;
+                }
+                else {
+                    indent = mainLine.get(mainLine.indexOf(currentCommit)).getIndent() + 1;
+                }
             }
         }
         for (JCommit result : resultList) {
             result.setIndent(indent);
+        }
+
+        if (firstCommit.getMergeChildCommit() != null) {
+            return new Pair<>(resultList, mainLine.indexOf(firstCommit.getMergeChildCommit()) + 1);
         }
         return new Pair<>(resultList, mainLine.indexOf(currentCommit));
     }
