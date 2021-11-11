@@ -2,6 +2,7 @@ package com.jlpatter.gitgui;
 
 import com.intellij.uiDesigner.core.GridConstraints;
 import com.intellij.uiDesigner.core.GridLayoutManager;
+import javafx.util.Pair;
 import org.eclipse.jgit.api.Status;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.lib.ObjectId;
@@ -145,14 +146,23 @@ public class JGitGUIForm {
             commitMap.put(commit.getId(), commit);
         }
 
+        List<JCommit> mainLine = getMainLine(firstCommit);
+
         Set<RevCommit> startingCommits = new HashSet<>();
         for (Ref ref : refs) {
             startingCommits.add(commitMap.get(ref.getObjectId()));
         }
 
-        assert firstCommit != null;
-        graphMessages.add(new GraphMessage(firstCommit, 0));
-        walkGraphCommits(firstCommit, graphMessages, 0, 0);
+        for (RevCommit commit : startingCommits) {
+            Pair<List<JCommit>, Integer> sideLine = getSideLine(new JCommit(commit, -1), mainLine);
+            if (sideLine.getValue() > -1) {
+                mainLine.addAll(sideLine.getValue(), sideLine.getKey());
+            }
+        }
+
+        for (JCommit commit : mainLine) {
+            graphMessages.add(new GraphMessage(commit));
+        }
 
         for (GraphMessage gm : graphMessages) {
             model.addRow(new Object[]{gm.toString()});
@@ -160,14 +170,40 @@ public class JGitGUIForm {
         commitTable.setModel(model);
     }
 
-    private void walkGraphCommits(RevCommit childCommit, List<GraphMessage> graphMessages, int depth, int indent) {
-        RevCommit[] parents = childCommit.getParents();
-        for (int i = parents.length - 1; i >= 0; i--) {
-            graphMessages.add(new GraphMessage(parents[i], i + indent));
-            if (depth < 10) {
-                walkGraphCommits(parents[i], graphMessages, depth + 1, i + indent);
+    private List<JCommit> getMainLine(RevCommit firstCommit) {
+        List<JCommit> resultList = new ArrayList<>();
+        RevCommit currentCommit = firstCommit;
+        resultList.add(new JCommit(currentCommit, 0));
+        while (currentCommit.getParentCount() > 0) {
+            RevCommit[] parents = currentCommit.getParents();
+            currentCommit = parents[0];
+            resultList.add(new JCommit(currentCommit, 0));
+        }
+        return resultList;
+    }
+
+    private Pair<List<JCommit>, Integer> getSideLine(JCommit firstCommit, List<JCommit> mainLine) {
+        List<JCommit> resultList = new ArrayList<>();
+        if (mainLine.contains(firstCommit)) {
+            return new Pair<>(resultList, -1);
+        }
+        JCommit currentCommit = firstCommit;
+        int indent = -1;
+        resultList.add(currentCommit);
+        while (!mainLine.contains(currentCommit)) {
+            RevCommit[] parents = currentCommit.getCommit().getParents();
+            currentCommit = new JCommit(parents[0], -1);
+            if (!mainLine.contains(currentCommit)) {
+                resultList.add(currentCommit);
+            }
+            else {
+                indent = mainLine.get(mainLine.indexOf(currentCommit)).getIndent() + 1;
             }
         }
+        for (JCommit result : resultList) {
+            result.setIndent(indent);
+        }
+        return new Pair<>(resultList, mainLine.indexOf(currentCommit));
     }
 
     private void UpdateStatusTables() throws GitAPIException {

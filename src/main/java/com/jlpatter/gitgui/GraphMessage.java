@@ -1,28 +1,21 @@
 package com.jlpatter.gitgui;
 
 import org.eclipse.jgit.lib.Ref;
-import org.eclipse.jgit.revwalk.RevCommit;
 
 import java.util.ArrayList;
 import java.util.List;
 
 public class GraphMessage {
-    private final RevCommit commit;
+    private final JCommit commit;
     private final List<Ref> branches;
-    private int indent;
 
-    public GraphMessage(RevCommit commit, int indent) {
+    public GraphMessage(JCommit commit) {
         this.commit = commit;
         branches = new ArrayList<>();
-        this.indent = indent;
     }
 
     public void addBranch(Ref branch) {
         branches.add(branch);
-    }
-
-    public void setIndent(int indent) {
-        this.indent = indent;
     }
 
     public boolean isFirstBranch() {
@@ -32,7 +25,7 @@ public class GraphMessage {
     @Override
     public String toString() {
         StringBuilder sb = new StringBuilder();
-        for (int i = 0; i < indent; i++) {
+        for (int i = 0; i < commit.getIndent(); i++) {
             sb.append("    ");
         }
 
@@ -42,7 +35,7 @@ public class GraphMessage {
             sb.append("(").append(branch.getName()).append(") ");
         }
 
-        sb.append(commit.getShortMessage());
+        sb.append(commit.getCommit().getShortMessage());
         return sb.toString();
     }
 }
