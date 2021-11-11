@@ -129,7 +129,7 @@ public class JGitGUIForm {
     }
 
     private void UpdateCommitTable() throws GitAPIException, IOException {
-        DefaultTableModel model = new DefaultTableModel(new Object[]{"Commits"}, 0);
+        DefaultTableModel model = new DefaultTableModel(new Object[]{"Branches", "Commits"}, 0);
         Iterable<RevCommit> commits = gitTools.getLog();
         List<Ref> refs = gitTools.getAllBranches();
 
@@ -149,9 +149,15 @@ public class JGitGUIForm {
         List<JCommit> mainLine = mainLinePair.getKey();
         List<JCommit> mainLineMergeCommits = mainLinePair.getValue();
 
-        Set<JCommit> startingCommits = new HashSet<>();
+        List<JCommit> startingCommits = new ArrayList<>();
         for (Ref ref : refs) {
-            startingCommits.add(new JCommit(commitMap.get(ref.getObjectId()), null, -1));
+            JCommit temp = new JCommit(commitMap.get(ref.getObjectId()), null, -1);
+            if (startingCommits.contains(temp)) {
+                startingCommits.get(startingCommits.indexOf(temp)).addBranch(ref);
+            } else {
+                temp.addBranch(ref);
+                startingCommits.add(temp);
+            }
         }
         startingCommits.addAll(mainLineMergeCommits);
 
@@ -163,7 +169,7 @@ public class JGitGUIForm {
         }
 
         for (JCommit commit : mainLine) {
-            model.addRow(new Object[]{commit});
+            model.addRow(new Object[]{commit.branchesToString(), commit});
         }
         commitTable.setModel(model);
     }
@@ -197,12 +203,10 @@ public class JGitGUIForm {
             currentCommit = new JCommit(parents[0], null, -1);
             if (!mainLine.contains(currentCommit)) {
                 resultList.add(currentCommit);
-            }
-            else {
+            } else {
                 if (firstCommit.getMergeChildCommit() != null) {
                     indent = firstCommit.getMergeChildCommit().getIndent() + 1;
-                }
-                else {
+                } else {
                     indent = mainLine.get(mainLine.indexOf(currentCommit)).getIndent() + 1;
                 }
             }

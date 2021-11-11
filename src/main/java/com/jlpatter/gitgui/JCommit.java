@@ -53,11 +53,15 @@ public class JCommit {
 
         sb.append("* ");
 
+        sb.append(commit.getShortMessage());
+        return sb.toString();
+    }
+
+    public String branchesToString() {
+        StringBuilder sb = new StringBuilder();
         for (Ref branch : branches) {
             sb.append("(").append(branch.getName()).append(") ");
         }
-
-        sb.append(commit.getShortMessage());
         return sb.toString();
     }
 }

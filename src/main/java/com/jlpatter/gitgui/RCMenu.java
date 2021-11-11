@@ -23,7 +23,7 @@ public class RCMenu extends MouseAdapter {
 
         JMenuItem testItem = new JMenuItem("Click Me!");
         testItem.addActionListener(e1 -> {
-            JCommit test = (JCommit) commitTable.getModel().getValueAt(commitTable.getSelectedRow(), 0);
+            JCommit test = (JCommit) commitTable.getModel().getValueAt(commitTable.getSelectedRow(), 1);
             System.out.println(test.getCommit().getId());
         });
 
